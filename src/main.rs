@@ -15,6 +15,12 @@ pub enum OpCode {
 
     //TODO: Mem Ops and Control flow
 
+    // control flow
+    Jump,
+    JumpEq,
+    JumpGt,
+    JumpLt,
+
     Exit 
 }
 
@@ -124,6 +130,77 @@ impl Context {
                     self.registers[reg_idx] = value;
                     self.pc += 1;
                 }
+            },
+            OpCode::Jump => {
+                if instruction.operands.is_empty() {
+                    return Err("Jump requires a target address operand".to_string());
+                }
+                let target = instruction.operands[0] as usize;
+                if target >= self.program.len() {
+                    return Err(format!("Jump target out of bounds: {}", target));
+                }
+
+                self.pc = target;
+                return Ok(());
+            },
+            OpCode::JumpEq => {
+                if instruction.operands.is_empty() {
+                    return Err("JumpEq requires a target address operand".to_string());
+                }
+                let target = instruction.operands[0] as usize;
+                if target >= self.program.len() {
+                    return Err(format!("Jump target out of bounds: {}", target));
+                }
+
+                let b = self.stack.pop().ok_or("Stack underflow")?;
+                let a = self.stack.pop().ok_or("Stack underflow")?;
+
+                if a == b {
+                    self.pc = target;
+                    return Ok(());
+                }
+
+                self.pc += 1;
+            },
+            OpCode::JumpGt => {
+                if instruction.operands.is_empty() {
+                    return Err("JumpGt requires a target address operand".to_string());
+                }
+
+                let target = instruction.operands[0] as usize;
+                if target >= self.program.len() {
+                    return Err(format!("Jump target out of bounds: {}", target));
+                }
+
+                let b = self.stack.pop().ok_or("Stack underflow")?;
+                let a = self.stack.pop().ok_or("Stack underflow")?;
+
+                if a > b {
+                    self.pc = target;
+                    return Ok(());
+                }
+
+                self.pc += 1;
+            },
+            OpCode::JumpLt => {
+                if instruction.operands.is_empty() {
+                    return Err("JumpGt requires a target address operand".to_string());
+                }
+
+                let target = instruction.operands[0] as usize;
+                if target >= self.program.len() {
+                    return Err(format!("Jump target out of bounds: {}", target));
+                }
+
+                let b = self.stack.pop().ok_or("Stack underflow")?;
+                let a = self.stack.pop().ok_or("Stack underflow")?;
+
+                if a < b {
+                    self.pc = target;
+                    return Ok(());
+                }
+
+                self.pc += 1;
             },
             OpCode::Exit => {
                 return Ok(());
